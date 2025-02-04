@@ -1,18 +1,17 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Appointment
-from accounts.models import CustomUser
-from datetime import datetime, timedelta
 from .forms import AppointmentForm
 from patients.models import Patient
+from doctors.models import Doctor
 
 # Create your views here.
 
 @login_required
 def book_appointment(request):
     # Get all doctors
-    doctors = CustomUser.objects.filter(role='DOCTOR')
+    doctors = Doctor.objects.all()
     
     if request.method == 'POST':
         doctor_id = request.POST.get('doctor')
@@ -21,7 +20,7 @@ def book_appointment(request):
         reason = request.POST.get('reason')
         
         try:
-            doctor = CustomUser.objects.get(id=doctor_id, role='DOCTOR')
+            doctor = Doctor.objects.get(id=doctor_id)
             
             # Convert date and time strings to proper format
             appointment_date = datetime.strptime(date, '%Y-%m-%d').date()
@@ -44,7 +43,7 @@ def book_appointment(request):
             # Create the appointment
             appointment = Appointment.objects.create(
                 doctor=doctor,
-                patient=request.user,
+                patient=request.user.patient,
                 date=appointment_date,
                 time=appointment_time,
                 reason=reason,
@@ -72,7 +71,7 @@ def manage_appointment(request, appointment_id):
         appointment = Appointment.objects.get(id=appointment_id)
         
         # Only the doctor of the appointment can manage it
-        if request.user != appointment.doctor:
+        if request.user != appointment.doctor.user:
             messages.error(request, 'You are not authorized to manage this appointment.')
             return redirect('doctor_dashboard')
         
@@ -100,7 +99,7 @@ def cancel_appointment(request, appointment_id):
     appointment = get_object_or_404(Appointment, id=appointment_id)
     
     # Only allow cancellation if user is the patient and appointment is pending or confirmed
-    if request.user != appointment.patient:
+    if request.user != appointment.patient.user:
         messages.error(request, 'You are not authorized to cancel this appointment.')
         return redirect('patient_dashboard')
     
@@ -119,6 +118,8 @@ def cancel_appointment(request, appointment_id):
 def appointment_list(request):
     if hasattr(request.user, 'patient'):
         appointments = Appointment.objects.filter(patient=request.user.patient)
+    elif hasattr(request.user, 'doctor'):
+        appointments = Appointment.objects.filter(doctor=request.user.doctor)
     else:
         appointments = []
     return render(request, 'appointments/appointment_list.html', {'appointments': appointments})
@@ -136,7 +137,13 @@ def create_appointment(request):
             appointment = form.save(commit=False)
             appointment.patient = request.user.patient
             appointment.save()
+            messages.success(request, 'Appointment created successfully!')
             return redirect('appointments:appointment_list')
     else:
         form = AppointmentForm()
-    return render(request, 'appointments/create_appointment.html', {'form': form})
+    
+    doctors = Doctor.objects.all()
+    return render(request, 'appointments/create_appointment.html', {
+        'form': form,
+        'doctors': doctors
+    })
