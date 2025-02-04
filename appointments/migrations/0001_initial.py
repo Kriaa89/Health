@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Appointment',
-            fields=[
+            name='Appointment', # this is the tables name 
+            fields=[ # these are the columns in the table 
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('date', models.DateField()),
                 ('time', models.TimeField()),
