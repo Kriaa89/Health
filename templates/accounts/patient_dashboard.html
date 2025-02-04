@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Patient Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Profile Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="rounded-circle profile-picture">
+                        {% else %}
+                        <div class="profile-picture-placeholder">
+                            <i class="fas fa-user fa-3x text-secondary"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <h4 class="mb-0">{{ user.get_full_name }}</h4>
+                    <p class="text-muted">Patient</p>
+                    <hr>
+                    <div class="text-start">
+                        <p><i class="fas fa-envelope me-2"></i> {{ user.email }}</p>
+                        <p><i class="fas fa-phone me-2"></i> {{ user.phone_number }}</p>
+                        <p><i class="fas fa-map-marker-alt me-2"></i> {{ user.address }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <div class="row">
+                <!-- Quick Actions -->
+                <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Quick Actions</h5>
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'book_appointment' %}" class="btn btn-primary">
+                                    <i class="fas fa-calendar-plus me-2"></i>Book New Appointment
+                                </a>
+                                <button class="btn btn-outline-primary">
+                                    <i class="fas fa-file-medical me-2"></i>View Medical Records
+                                </button>
+                                <button class="btn btn-outline-primary">
+                                    <i class="fas fa-pills me-2"></i>Prescription History
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="col-md-6 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">Your Statistics</h5>
+                            <div class="row text-center">
+                                <div class="col-6 mb-3">
+                                    <h3 class="text-primary mb-0">{{ upcoming_appointments.count }}</h3>
+                                    <small class="text-muted">Upcoming</small>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <h3 class="text-warning mb-0">{{ pending_appointments.count }}</h3>
+                                    <small class="text-muted">Pending</small>
+                                </div>
+                                <div class="col-6">
+                                    <h3 class="text-success mb-0">{{ completed_appointments.count }}</h3>
+                                    <small class="text-muted">Completed</small>
+                                </div>
+                                <div class="col-6">
+                                    <h3 class="text-danger mb-0">{{ cancelled_appointments.count }}</h3>
+                                    <small class="text-muted">Cancelled</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointments Table -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Your Appointments</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Doctor</th>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in appointments %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if appointment.doctor.profile_picture %}
+                                            <img src="{{ appointment.doctor.profile_picture.url }}" alt="Doctor" class="rounded-circle me-2" style="width: 32px; height: 32px;">
+                                            {% else %}
+                                            <div class="rounded-circle bg-light me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                <i class="fas fa-user-md text-secondary"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <div class="fw-bold">Dr. {{ appointment.doctor.get_full_name }}</div>
+                                                <small class="text-muted">{{ appointment.doctor.specialization }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ appointment.date }}</td>
+                                    <td>{{ appointment.time }}</td>
+                                    <td>
+                                        {% if appointment.status == 'PENDING' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% elif appointment.status == 'CONFIRMED' %}
+                                        <span class="badge bg-success">Confirmed</span>
+                                        {% elif appointment.status == 'COMPLETED' %}
+                                        <span class="badge bg-primary">Completed</span>
+                                        {% elif appointment.status == 'CANCELLED' %}
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#appointmentModal{{ appointment.id }}">
+                                            <i class="fas fa-info-circle"></i> Details
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <!-- Appointment Details Modal -->
+                                <div class="modal fade" id="appointmentModal{{ appointment.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Appointment Details</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <h6>Doctor Information</h6>
+                                                    <p class="mb-1"><strong>Name:</strong> Dr. {{ appointment.doctor.get_full_name }}</p>
+                                                    <p class="mb-1"><strong>Email:</strong> {{ appointment.doctor.email }}</p>
+                                                    <p class="mb-1"><strong>Phone:</strong> {{ appointment.doctor.phone_number }}</p>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <h6>Appointment Information</h6>
+                                                    <p class="mb-1"><strong>Date:</strong> {{ appointment.date }}</p>
+                                                    <p class="mb-1"><strong>Time:</strong> {{ appointment.time }}</p>
+                                                    <p class="mb-1">
+                                                        <strong>Status:</strong>
+                                                        {% if appointment.status == 'PENDING' %}
+                                                        <span class="badge bg-warning">Pending</span>
+                                                        {% elif appointment.status == 'CONFIRMED' %}
+                                                        <span class="badge bg-success">Confirmed</span>
+                                                        {% elif appointment.status == 'COMPLETED' %}
+                                                        <span class="badge bg-primary">Completed</span>
+                                                        {% elif appointment.status == 'CANCELLED' %}
+                                                        <span class="badge bg-danger">Cancelled</span>
+                                                        {% endif %}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <h6>Reason for Visit</h6>
+                                                    <p class="mb-0">{{ appointment.reason }}</p>
+                                                </div>
+                                                {% if appointment.notes %}
+                                                <div class="mt-3">
+                                                    <h6>Doctor's Notes</h6>
+                                                    <p class="mb-0">{{ appointment.notes }}</p>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                {% if appointment.status == 'PENDING' or appointment.status == 'CONFIRMED' %}
+                                                <form method="post" action="{% url 'cancel_appointment' appointment.id %}" style="display: inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger">Cancel Appointment</button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="text-muted">
+                                            <i class="fas fa-calendar-times fa-2x mb-3"></i>
+                                            <p class="mb-0">No appointments found</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

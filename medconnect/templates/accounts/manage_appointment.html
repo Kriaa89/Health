@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Appointment{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Appointment Details</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Appointment Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Patient Information</h5>
+                            <p><strong>Name:</strong> {{ appointment.patient.user.get_full_name }}</p>
+                            <p><strong>Gender:</strong> {{ appointment.patient.user.get_gender_display }}</p>
+                            <p><strong>Phone:</strong> {{ appointment.patient.user.phone_number }}</p>
+                            <p><strong>Blood Type:</strong> {{ appointment.patient.blood_type }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Appointment Details</h5>
+                            <p><strong>Date:</strong> {{ appointment.date }}</p>
+                            <p><strong>Time:</strong> {{ appointment.time }}</p>
+                            <p><strong>Type:</strong> {{ appointment.get_type_display }}</p>
+                            <p><strong>Status:</strong> {{ appointment.get_status_display }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Medical History -->
+                    <div class="mb-4">
+                        <h5>Medical History</h5>
+                        <p><strong>Allergies:</strong> {{ appointment.patient.allergies|default:"None reported" }}</p>
+                        <p><strong>Chronic Conditions:</strong> {{ appointment.patient.chronic_conditions|default:"None reported" }}</p>
+                        <p><strong>Current Medications:</strong> {{ appointment.patient.current_medications|default:"None" }}</p>
+                    </div>
+
+                    <!-- Gender Specific Information -->
+                    {% if appointment.patient.user.gender == 'MALE' %}
+                        {% with male_info=appointment.patient.malepatient %}
+                        <div class="mb-4">
+                            <h5>Male-Specific Information</h5>
+                            <p><strong>PSA Level:</strong> {{ male_info.psa_level|default:"Not recorded" }}</p>
+                            <p><strong>Last Cardiac Test:</strong> {% if male_info.cardiac_test %}Yes{% else %}No{% endif %}</p>
+                            <p><strong>Last Prostate Exam:</strong> {% if male_info.prostate_exam %}Yes{% else %}No{% endif %}</p>
+                        </div>
+                        {% endwith %}
+                    {% else %}
+                        {% with female_info=appointment.patient.femalepatient %}
+                        <div class="mb-4">
+                            <h5>Female-Specific Information</h5>
+                            <p><strong>Last Menstrual Date:</strong> {{ female_info.last_menstrual|default:"Not recorded" }}</p>
+                            <p><strong>Last Mammogram:</strong> {{ female_info.mammogram_date|default:"Not recorded" }}</p>
+                            <p><strong>Pregnancy Status:</strong> {% if female_info.pregnant %}Yes{% else %}No{% endif %}</p>
+                        </div>
+                        {% endwith %}
+                    {% endif %}
+
+                    <!-- Appointment Notes Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Symptoms -->
+                        <div class="mb-3">
+                            <label for="symptoms" class="form-label">Symptoms</label>
+                            <textarea class="form-control" id="symptoms" name="symptoms" rows="3">{{ appointment.symptoms }}</textarea>
+                        </div>
+
+                        <!-- Diagnosis -->
+                        <div class="mb-3">
+                            <label for="diagnosis" class="form-label">Diagnosis</label>
+                            <textarea class="form-control" id="diagnosis" name="diagnosis" rows="3">{{ appointment.diagnosis }}</textarea>
+                        </div>
+
+                        <!-- Prescription -->
+                        <div class="mb-3">
+                            <label for="prescription" class="form-label">Prescription</label>
+                            <textarea class="form-control" id="prescription" name="prescription" rows="3">{{ appointment.prescription }}</textarea>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Additional Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3">{{ appointment.notes }}</textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="text-end">
+                            {% if appointment.status == 'PENDING' %}
+                                <button type="submit" name="action" value="decline" class="btn btn-danger">
+                                    Decline Appointment
+                                </button>
+                                <button type="submit" name="action" value="accept" class="btn btn-success">
+                                    Accept Appointment
+                                </button>
+                            {% endif %}
+                            {% if appointment.status == 'COMPLETED' %}
+                                <button type="submit" name="action" value="update" class="btn btn-primary">
+                                    Update Information
+                                </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

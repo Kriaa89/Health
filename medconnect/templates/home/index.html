@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Welcome to MedConnect Tunisia{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row py-5">
+        <div class="col-md-6">
+            <h1 class="display-4">Welcome to MedConnect Tunisia</h1>
+            <p class="lead">Connecting patients with healthcare professionals for better healthcare services.</p>
+            <div class="mt-4">
+                <a href="{% url 'accounts:role_select' %}" class="btn btn-primary btn-lg me-3">Sign Up</a>
+                <a href="#features" class="btn btn-outline-secondary btn-lg">Learn More</a>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <!-- Add hero image here -->
+            <img src="{% static 'images/hero-image.jpg' %}" alt="Healthcare" class="img-fluid">
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div id="features" class="row py-5">
+        <h2 class="text-center mb-5">Our Features</h2>
+        
+        <!-- Feature 1 -->
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-3x mb-3"></i>
+                    <h5 class="card-title">24/7 Availability</h5>
+                    <p class="card-text">Access healthcare services anytime, anywhere.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-user-md fa-3x mb-3"></i>
+                    <h5 class="card-title">Verified Doctors</h5>
+                    <p class="card-text">All our healthcare professionals are verified and certified.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-calendar-check fa-3x mb-3"></i>
+                    <h5 class="card-title">Easy Booking</h5>
+                    <p class="card-text">Book appointments with just a few clicks.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-video fa-3x mb-3"></i>
+                    <h5 class="card-title">Telemedicine</h5>
+                    <p class="card-text">Virtual consultations from the comfort of your home.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

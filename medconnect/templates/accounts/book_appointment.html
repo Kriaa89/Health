@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Appointment{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Book New Appointment</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="appointmentForm">
+                        {% csrf_token %}
+                        
+                        <!-- Doctor Selection -->
+                        <div class="mb-3">
+                            <label for="doctor" class="form-label">Select Doctor</label>
+                            <select name="doctor" id="doctor" class="form-select" required>
+                                <option value="">Choose a doctor...</option>
+                                {% for doctor in doctors %}
+                                    <option value="{{ doctor.id }}">
+                                        Dr. {{ doctor.user.get_full_name }} - {{ doctor.specialty }}
+                                        (Rating: {{ doctor.average_rating|floatformat:1 }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Appointment Type -->
+                        <div class="mb-3">
+                            <label for="type" class="form-label">Appointment Type</label>
+                            <select name="type" id="type" class="form-select" required>
+                                <option value="">Select type...</option>
+                                <option value="PHYSICAL">In-Clinic Visit</option>
+                                <option value="VIRTUAL">Virtual Consultation</option>
+                                <option value="HOME">Home Visit</option>
+                                <option value="EMERGENCY">Emergency</option>
+                            </select>
+                        </div>
+
+                        <!-- Date and Time -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="date" class="form-label">Preferred Date</label>
+                                <input type="date" class="form-control" id="date" name="date" required
+                                    min="{{ today|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="time" class="form-label">Preferred Time</label>
+                                <input type="time" class="form-control" id="time" name="time" required>
+                            </div>
+                        </div>
+
+                        <!-- Home Visit Address -->
+                        <div class="mb-3" id="addressField" style="display: none;">
+                            <label for="address" class="form-label">Home Visit Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+                        </div>
+
+                        <!-- Reason for Visit -->
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">Reason for Visit</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="3" required></textarea>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="text-end">
+                            <a href="{% url 'patient_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Book Appointment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Show/hide address field based on appointment type
+    document.getElementById('type').addEventListener('change', function() {
+        const addressField = document.getElementById('addressField');
+        if (this.value === 'HOME') {
+            addressField.style.display = 'block';
+            document.getElementById('address').required = true;
+        } else {
+            addressField.style.display = 'none';
+            document.getElementById('address').required = false;
+        }
+    });
+
+    // Validate date and time
+    document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+        const date = new Date(document.getElementById('date').value);
+        const time = document.getElementById('time').value;
+        const today = new Date();
+        
+        if (date < today) {
+            e.preventDefault();
+            alert('Please select a future date.');
+            return;
+        }
+
+        const [hours, minutes] = time.split(':');
+        if (hours < 9 || hours > 17) {
+            e.preventDefault();
+            alert('Please select a time between 9:00 AM and 5:00 PM.');
+            return;
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

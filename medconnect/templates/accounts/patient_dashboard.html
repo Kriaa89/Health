@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block title %}Patient Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1>Welcome {{ patient.user.get_full_name }}</h1>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'book_appointment' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Book New Appointment
+            </a>
+        </div>
+    </div>
+
+    <!-- Patient Info Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Medical Information</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Blood Type:</strong> {{ patient.blood_type }}</p>
+                    <p><strong>Emergency Contact:</strong> {{ patient.emergency_contact_name }}</p>
+                    <p><strong>Emergency Phone:</strong> {{ patient.emergency_contact_phone }}</p>
+                </div>
+                <div class="col-md-6">
+                    {% if patient.user.gender == 'MALE' %}
+                        {% with male_info=patient.malepatient %}
+                            <p><strong>Last Cardiac Test:</strong> {% if male_info.cardiac_test %}Yes{% else %}No{% endif %}</p>
+                            <p><strong>PSA Level:</strong> {{ male_info.psa_level|default:"Not recorded" }}</p>
+                        {% endwith %}
+                    {% else %}
+                        {% with female_info=patient.femalepatient %}
+                            <p><strong>Last Menstrual Date:</strong> {{ female_info.last_menstrual|default:"Not recorded" }}</p>
+                            <p><strong>Last Mammogram:</strong> {{ female_info.mammogram_date|default:"Not recorded" }}</p>
+                            <p><strong>Pregnancy Status:</strong> {% if female_info.pregnant %}Yes{% else %}No{% endif %}</p>
+                        {% endwith %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointments Section -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">My Appointments</h5>
+        </div>
+        <div class="card-body">
+            {% if appointments %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Doctor</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in appointments %}
+                            <tr class="{% if appointment.status == 'PENDING' %}table-warning{% elif appointment.status == 'COMPLETED' %}table-success{% elif appointment.status == 'CANCELED' %}table-danger{% endif %}">
+                                <td>Dr. {{ appointment.doctor.user.get_full_name }}</td>
+                                <td>{{ appointment.date }}</td>
+                                <td>{{ appointment.time }}</td>
+                                <td>{{ appointment.get_type_display }}</td>
+                                <td>{{ appointment.get_status_display }}</td>
+                                <td>
+                                    {% if appointment.status == 'PENDING' %}
+                                        <form method="post" action="{% url 'cancel_appointment' appointment.id %}" class="d-inline">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if appointment.status == 'COMPLETED' %}
+                                        <a href="{% url 'view_prescription' appointment.id %}" class="btn btn-info btn-sm">
+                                            View Details
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No appointments found. Book your first appointment now!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register{% endblock %}
+
+{% block extra_css %}
+<style>
+    .role-option, .gender-option {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .role-option:hover, .gender-option:hover {
+        border-color: var(--primary-color);
+    }
+    
+    .role-option.selected, .gender-option.selected {
+        border-color: var(--primary-color);
+        background-color: rgba(0, 166, 81, 0.1);
+    }
+    
+    .role-option i, .gender-option i {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .role-radio, .gender-radio {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .role-radio:checked + .role-option,
+    .gender-radio:checked + .gender-option {
+        border-color: var(--primary-color);
+        background-color: rgba(0, 166, 81, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center py-5">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <h4 class="fw-bold">Create an Account</h4>
+                        <p class="text-muted">Join MedHealth Tunisia today</p>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Role Selection -->
+                        <div class="mb-4">
+                            <label class="form-label d-block">Choose your role</label>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <input type="radio" class="role-radio" name="{{ form.role.name }}" id="role_doctor" value="DOCTOR" 
+                                        {% if form.role.value == 'DOCTOR' %}checked{% endif %}>
+                                    <label class="role-option text-center w-100 mb-0" for="role_doctor">
+                                        <i class="fas fa-user-md d-block"></i>
+                                        <h6 class="mb-1">Doctor</h6>
+                                        <small class="text-muted">I want to provide medical services</small>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="radio" class="role-radio" name="{{ form.role.name }}" id="role_patient" value="PATIENT"
+                                        {% if form.role.value == 'PATIENT' %}checked{% endif %}>
+                                    <label class="role-option text-center w-100 mb-0" for="role_patient">
+                                        <i class="fas fa-user d-block"></i>
+                                        <h6 class="mb-1">Patient</h6>
+                                        <small class="text-muted">I'm looking for medical services</small>
+                                    </label>
+                                </div>
+                            </div>
+                            {% if form.role.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.role.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
+                                <input type="text" name="{{ form.first_name.name }}" 
+                                    class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                                    id="{{ form.first_name.id_for_label }}" 
+                                    placeholder="Enter your first name"
+                                    value="{{ form.first_name.value|default:'' }}"
+                                    required>
+                                {% if form.first_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.first_name.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                                <input type="text" name="{{ form.last_name.name }}" 
+                                    class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+                                    id="{{ form.last_name.id_for_label }}" 
+                                    placeholder="Enter your last name"
+                                    value="{{ form.last_name.value|default:'' }}"
+                                    required>
+                                {% if form.last_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.last_name.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">Email Address</label>
+                            <input type="email" name="{{ form.email.name }}" 
+                                class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                                id="{{ form.email.id_for_label }}" 
+                                placeholder="Enter your email"
+                                value="{{ form.email.value|default:'' }}"
+                                required>
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.email.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Gender Selection -->
+                        <div class="mb-4">
+                            <label class="form-label d-block">Gender</label>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <input type="radio" class="gender-radio" name="{{ form.gender.name }}" id="gender_male" value="MALE"
+                                        {% if form.gender.value == 'MALE' %}checked{% endif %}>
+                                    <label class="gender-option text-center w-100 mb-0" for="gender_male">
+                                        <i class="fas fa-male d-block"></i>
+                                        <h6 class="mb-0">Male</h6>
+                                    </label>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="radio" class="gender-radio" name="{{ form.gender.name }}" id="gender_female" value="FEMALE"
+                                        {% if form.gender.value == 'FEMALE' %}checked{% endif %}>
+                                    <label class="gender-option text-center w-100 mb-0" for="gender_female">
+                                        <i class="fas fa-female d-block"></i>
+                                        <h6 class="mb-0">Female</h6>
+                                    </label>
+                                </div>
+                            </div>
+                            {% if form.gender.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.gender.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text">+216</span>
+                                <input type="tel" name="{{ form.phone_number.name }}" 
+                                    class="form-control {% if form.phone_number.errors %}is-invalid{% endif %}"
+                                    id="{{ form.phone_number.id_for_label }}" 
+                                    placeholder="XX XXX XXX"
+                                    value="{{ form.phone_number.value|default:'' }}"
+                                    required>
+                                {% if form.phone_number.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.phone_number.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                            <textarea name="{{ form.address.name }}" 
+                                    class="form-control {% if form.address.errors %}is-invalid{% endif %}"
+                                    id="{{ form.address.id_for_label }}" 
+                                    rows="2"
+                                    placeholder="Enter your full address">{{ form.address.value|default:'' }}</textarea>
+                            {% if form.address.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.address.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth</label>
+                            <input type="date" name="{{ form.date_of_birth.name }}" 
+                                class="form-control {% if form.date_of_birth.errors %}is-invalid{% endif %}"
+                                id="{{ form.date_of_birth.id_for_label }}" 
+                                value="{{ form.date_of_birth.value|date:'Y-m-d'|default:'' }}"
+                                required>
+                            {% if form.date_of_birth.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.date_of_birth.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">{{ form.date_of_birth.help_text }}</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Profile Picture</label>
+                            <input type="file" name="{{ form.profile_picture.name }}" 
+                                class="form-control {% if form.profile_picture.errors %}is-invalid{% endif %}"
+                                id="{{ form.profile_picture.id_for_label }}" 
+                                accept="image/*">
+                            {% if form.profile_picture.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.profile_picture.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">{{ form.profile_picture.help_text }}</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
+                            <input type="password" name="{{ form.password1.name }}" 
+                                class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                                id="{{ form.password1.id_for_label }}" 
+                                placeholder="Create a password"
+                                required>
+                            {% if form.password1.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.password1.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">{{ form.password1.help_text }}</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label">Confirm Password</label>
+                            <input type="password" name="{{ form.password2.name }}" 
+                                class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                                id="{{ form.password2.id_for_label }}" 
+                                placeholder="Confirm your password"
+                                required>
+                            {% if form.password2.errors %}
+                                <div class="invalid-feedback">
+                                    {{ form.password2.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Create Account</button>
+                        </div>
+
+                        <p class="text-center mt-4 mb-0">
+                            Already have an account? <a href="{% url 'login' %}" class="text-primary">Login here</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/main.js' %}"></script>
+{% endblock %}

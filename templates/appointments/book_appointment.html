@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Book Appointment{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Book an Appointment</h2>
+                    
+                    {% if messages %}
+                    <div class="messages mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="doctor" class="form-label">Select Doctor</label>
+                            <select name="doctor" id="doctor" class="form-select" required>
+                                <option value="">Choose a doctor...</option>
+                                {% for doctor in doctors %}
+                                <option value="{{ doctor.id }}">Dr. {{ doctor.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="date" class="form-label">Appointment Date</label>
+                            <input type="date" class="form-control" id="date" name="date" 
+                                min="{{ min_date }}" max="{{ max_date }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="time" class="form-label">Appointment Time</label>
+                            <input type="time" class="form-control" id="time" name="time" 
+                                min="08:00" max="17:00" step="1800" required>
+                            <small class="text-muted">Available hours: 8:00 AM - 5:00 PM</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="reason" class="form-label">Reason for Visit</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="3" required
+                                    placeholder="Please describe your reason for visiting"></textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-calendar-check me-2"></i>Request Appointment
+                            </button>
+                            <a href="{% url 'patient_dashboard' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Ensure time is in 30-minute intervals
+    document.getElementById('time').addEventListener('change', function(e) {
+        var time = e.target.value;
+        var hour = parseInt(time.split(':')[0]);
+        var minute = parseInt(time.split(':')[1]);
+        
+        // Round to nearest 30 minutes
+        minute = Math.round(minute/30) * 30;
+        if (minute === 60) {
+            minute = 0;
+            hour += 1;
+        }
+        
+        // Format back to HH:MM
+        e.target.value = 
+            (hour < 10 ? '0' : '') + hour + ':' + 
+            (minute === 0 ? '00' : '30');
+    });
+</script>
+{% endblock %}
+{% endblock %}
