@@ -4,6 +4,8 @@ from django.contrib import messages
 from .models import Appointment
 from accounts.models import CustomUser
 from datetime import datetime, timedelta
+from .forms import AppointmentForm
+from patients.models import Patient
 
 # Create your views here.
 
@@ -112,3 +114,29 @@ def cancel_appointment(request, appointment_id):
     
     messages.success(request, 'Appointment cancelled successfully.')
     return redirect('patient_dashboard')
+
+@login_required
+def appointment_list(request):
+    if hasattr(request.user, 'patient'):
+        appointments = Appointment.objects.filter(patient=request.user.patient)
+    else:
+        appointments = []
+    return render(request, 'appointments/appointment_list.html', {'appointments': appointments})
+
+@login_required
+def create_appointment(request):
+    # Check if user has a patient profile
+    if not hasattr(request.user, 'patient'):
+        # Create a patient profile if it doesn't exist
+        Patient.objects.create(user=request.user)
+    
+    if request.method == 'POST':
+        form = AppointmentForm(request.POST)
+        if form.is_valid():
+            appointment = form.save(commit=False)
+            appointment.patient = request.user.patient
+            appointment.save()
+            return redirect('appointments:appointment_list')
+    else:
+        form = AppointmentForm()
+    return render(request, 'appointments/create_appointment.html', {'form': form})
