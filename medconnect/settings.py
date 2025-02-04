@@ -45,6 +45,9 @@ INSTALLED_APPS = [
     'appointments',
 ]
 
+# Custom user model
+AUTH_USER_MODEL = 'accounts.CustomUser'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -130,7 +133,6 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Authentication settings
-AUTH_USER_MODEL = 'accounts.CustomUser'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
