@@ -15,6 +15,22 @@ class CustomUser(AbstractUser):
         ('PATIENT', 'Patient'),
     ]
     
+    # Override groups and user_permissions with custom related_name
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name=_('groups'),
+        blank=True,
+        related_name='custom_user_set',
+        related_query_name='custom_user'
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name=_('user permissions'),
+        blank=True,
+        related_name='custom_user_set',
+        related_query_name='custom_user'
+    )
+    
     gender = models.CharField(max_length=6, choices=GENDER_CHOICES)
     role = models.CharField(max_length=7, choices=ROLE_CHOICES)
     phone_number = models.CharField(max_length=15)
