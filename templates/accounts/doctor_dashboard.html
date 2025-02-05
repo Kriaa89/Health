@@ -42,9 +42,9 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="#" class="btn btn-outline-primary">View Schedule</a>
-                        <a href="#" class="btn btn-outline-success">New Appointment</a>
-                        <a href="#" class="btn btn-outline-info">Patient Records</a>
+                        <a href="{% url 'appointments:doctor_schedule' %}" class="btn btn-outline-primary">View Schedule</a>
+                        <a href="{% url 'appointments:new_appointment' %}" class="btn btn-outline-success">New Appointment</a>
+                        <a href="{% url 'appointments:patient_records' %}" class="btn btn-outline-info">Patient Records</a>
                     </div>
                 </div>
             </div>
@@ -76,8 +76,14 @@
                                             <td>{{ appointment.date }}</td>
                                             <td>{{ appointment.time }}</td>
                                             <td>
-                                                <button class="btn btn-sm btn-success">Confirm</button>
-                                                <button class="btn btn-sm btn-danger">Cancel</button>
+                                                <form method="post" action="{% url 'appointments:manage_appointment' appointment.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
+                                                </form>
+                                                <form method="post" action="{% url 'appointments:cancel_appointment' appointment.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-danger">Decline</button>
+                                                </form>
                                             </td>
                                         </tr>
                                     {% endfor %}

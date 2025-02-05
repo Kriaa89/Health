@@ -112,3 +112,35 @@ def cancel_appointment(request, appointment_id):
     
     messages.success(request, 'Appointment cancelled successfully.')
     return redirect('patient_dashboard')
+
+@login_required
+def doctor_schedule(request):
+    if request.user.role != 'DOCTOR':
+        messages.error(request, 'Access denied. Only doctors can view their schedule.')
+        return redirect('accounts:home')
+    
+    appointments = Appointment.objects.filter(doctor=request.user).order_by('date', 'time')
+    return render(request, 'appointments/doctor_schedule.html', {'appointments': appointments})
+
+@login_required
+def new_appointment(request):
+    if request.user.role != 'DOCTOR':
+        messages.error(request, 'Access denied. Only doctors can create new appointments.')
+        return redirect('accounts:home')
+    
+    if request.method == 'POST':
+        # Add appointment creation logic here
+        pass
+    return render(request, 'appointments/new_appointment.html')
+
+@login_required
+def patient_records(request):
+    if request.user.role != 'DOCTOR':
+        messages.error(request, 'Access denied. Only doctors can view patient records.')
+        return redirect('accounts:home')
+    
+    # Get all patients who have had appointments with this doctor
+    patients = CustomUser.objects.filter(
+        patient_appointments__doctor=request.user
+    ).distinct()
+    return render(request, 'appointments/patient_records.html', {'patients': patients})
