@@ -28,7 +28,7 @@ def book_appointment(request):
             # Check if the appointment time is during working hours (8 AM - 5 PM)
             if appointment_time.hour < 8 or appointment_time.hour >= 17:
                 messages.error(request, 'Please select a time between 8 AM and 5 PM')
-                return redirect('book_appointment')
+                return redirect('appointments:book_appointment')
             
             # Check if doctor already has an appointment at this time
             if Appointment.objects.filter(
@@ -37,7 +37,7 @@ def book_appointment(request):
                 time=appointment_time
             ).exists():
                 messages.error(request, 'This time slot is already booked. Please select another time.')
-                return redirect('book_appointment')
+                return redirect('appointments:book_appointment')
             
             # Create the appointment
             appointment = Appointment.objects.create(
@@ -50,11 +50,11 @@ def book_appointment(request):
             )
             
             messages.success(request, 'Appointment request submitted successfully! Waiting for doctor confirmation.')
-            return redirect('patient_dashboard')
+            return redirect('accounts:patient_dashboard')
             
         except Exception as e:
             messages.error(request, 'Error booking appointment. Please try again.')
-            return redirect('book_appointment')
+            return redirect('appointments:book_appointment')
     
     # For GET request, show the booking form
     context = {
@@ -72,7 +72,7 @@ def manage_appointment(request, appointment_id):
         # Only the doctor of the appointment can manage it
         if request.user != appointment.doctor:
             messages.error(request, 'You are not authorized to manage this appointment.')
-            return redirect('doctor_dashboard')
+            return redirect('accounts:doctor_dashboard')
         
         action = request.POST.get('action')
         
@@ -91,7 +91,7 @@ def manage_appointment(request, appointment_id):
     except Appointment.DoesNotExist:
         messages.error(request, 'Appointment not found.')
     
-    return redirect('doctor_dashboard')
+    return redirect('accounts:doctor_dashboard')
 
 @login_required
 def cancel_appointment(request, appointment_id):
@@ -100,18 +100,18 @@ def cancel_appointment(request, appointment_id):
     # Only allow cancellation if user is the patient and appointment is pending or confirmed
     if request.user != appointment.patient:
         messages.error(request, 'You are not authorized to cancel this appointment.')
-        return redirect('patient_dashboard')
+        return redirect('accounts:patient_dashboard')
     
     if appointment.status not in ['PENDING', 'CONFIRMED']:
         messages.error(request, 'This appointment cannot be cancelled.')
-        return redirect('patient_dashboard')
+        return redirect('accounts:patient_dashboard')
     
     # Cancel the appointment
     appointment.status = 'CANCELLED'
     appointment.save()
     
     messages.success(request, 'Appointment cancelled successfully.')
-    return redirect('patient_dashboard')
+    return redirect('accounts:patient_dashboard')
 
 @login_required
 def doctor_schedule(request):

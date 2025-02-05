@@ -32,9 +32,11 @@ def register(request):
 
 def user_login(request):
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
+        email = request.POST.get('username')  # Form sends email in username field
+        password = request.POST.get('password')
+        
+        user = authenticate(request, username=email, password=password)
+        if user is not None:
             auth_login(request, user)
             messages.success(request, 'Login successful!')
             
@@ -47,8 +49,10 @@ def user_login(request):
                 return redirect('accounts:patient_dashboard')
             else:
                 return redirect('accounts:home')
-    else:
-        form = AuthenticationForm()
+        else:
+            messages.error(request, 'Invalid email or password.')
+    
+    form = AuthenticationForm()
     return render(request, 'accounts/login.html', {'form': form})
 
 @login_required
