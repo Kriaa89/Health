@@ -40,13 +40,13 @@ def user_login(request):
             
             # Redirect based on user role
             if user.role == 'DOCTOR':
-                return redirect('doctor_dashboard')
+                return redirect('accounts:doctor_dashboard')
             elif user.role == 'NURSE':
-                return redirect('nurse_dashboard')
+                return redirect('accounts:nurse_dashboard')
             elif user.role == 'PATIENT':
-                return redirect('patient_dashboard')
+                return redirect('accounts:patient_dashboard')
             else:
-                return redirect('home')
+                return redirect('accounts:home')
     else:
         form = AuthenticationForm()
     return render(request, 'accounts/login.html', {'form': form})
