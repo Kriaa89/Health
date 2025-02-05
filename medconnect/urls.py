@@ -18,19 +18,18 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib.auth import views as auth_views
 from accounts import views as account_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', account_views.home, name='home'),
-    
-    # Account URLs
-    path('register/', account_views.register, name='register'),
+    path('', account_views.home, name='home'),  
     path('login/', account_views.user_login, name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
-    path('profile/', account_views.profile, name='profile'),
-    
-    # Appointment URLs
+    path('register/', account_views.register, name='register'),
+    path('logout/', account_views.user_logout, name='logout'),
+    path('doctor-dashboard/', account_views.doctor_dashboard, name='doctor_dashboard'),
+    path('nurse-dashboard/', account_views.nurse_dashboard, name='nurse_dashboard'),
+    path('patient-dashboard/', account_views.patient_dashboard, name='patient_dashboard'),
+    path('doctors/', include('doctors.urls')),
+    path('nurses/', include('nurses.urls')),
     path('appointments/', include('appointments.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

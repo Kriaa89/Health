@@ -19,38 +19,70 @@ class CustomUserCreationForm(UserCreationForm):
         validators=[phone_regex], 
         max_length=8,
         help_text="Enter your 8-digit phone number",
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'XX XXX XXX'})
     )
-
-    is_patient = forms.BooleanField(
-        required=False,
-        help_text="Check if you are a patient",
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    
+    date_of_birth = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        help_text="Select your date of birth"
     )
-
-    is_doctor = forms.BooleanField(
+    
+    address = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+        help_text="Enter your full address"
+    )
+    
+    profile_picture = forms.ImageField(
         required=False,
-        help_text="Check if you are a doctor",
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+        help_text="Upload a profile picture (optional)",
+        widget=forms.FileInput(attrs={'class': 'form-control'})
     )
     
     class Meta:
         model = CustomUser
-        fields = ('username', 'email', 'phone_number', 'is_patient', 'is_doctor', 'password1', 'password2')
+        fields = (
+            'first_name', 'last_name', 'email', 'role', 'gender',
+            'phone_number', 'address', 'date_of_birth', 'profile_picture',
+            'password1', 'password2'
+        )
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'role': forms.RadioSelect(attrs={'class': 'role-radio'}),
+            'gender': forms.RadioSelect(attrs={'class': 'gender-radio'})
         }
-
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make required fields
+        self.fields['first_name'].required = True
+        self.fields['last_name'].required = True
+        self.fields['email'].required = True
+        self.fields['role'].required = True
+        self.fields['gender'].required = True
+        self.fields['phone_number'].required = True
+        self.fields['address'].required = True
+        self.fields['date_of_birth'].required = True
+        
+        # Add help texts
+        self.fields['first_name'].help_text = "Enter your first name"
+        self.fields['last_name'].help_text = "Enter your last name"
+        self.fields['role'].help_text = "Select your role"
+        self.fields['gender'].help_text = "Select your gender"
+        
+        # Remove username field since we're using email
+        if 'username' in self.fields:
+            del self.fields['username']
+    
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if CustomUser.objects.filter(email=email).exists():
             raise forms.ValidationError("This email address is already in use.")
         return email
-
-class LoginForm(forms.Form):
-    username = forms.CharField(
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    password = forms.CharField(
-        widget=forms.PasswordInput(attrs={'class': 'form-control'})
-    )
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.username = self.cleaned_data['email']
+        if commit:
+            user.save()
+        return user
