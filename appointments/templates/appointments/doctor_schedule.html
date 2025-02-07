@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Doctor Schedule{% endblock %}
+
+{% block extra_css %}
+<style>
+    .time-slot {
+        padding: 10px;
+        margin: 5px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .time-slot:hover {
+        background-color: #e9ecef;
+    }
+    .time-slot.selected {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+    .time-slot.unavailable {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+    .appointment-card {
+        transition: all 0.3s;
+    }
+    .appointment-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">My Schedule</h2>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        {% if appointments %}
+            {% for appointment in appointments %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card appointment-card h-100">
+                    <div class="card-header {% if appointment.status == 'PENDING' %}bg-warning
+                        {% elif appointment.status == 'CONFIRMED' %}bg-success
+                        {% elif appointment.status == 'COMPLETED' %}bg-info
+                        {% else %}bg-danger{% endif %} text-white">
+                        <h5 class="card-title mb-0">
+                            {{ appointment.status }}
+                            {% if appointment.status == 'CONFIRMED' %}
+                            - {{ appointment.time|time:"g:i A" }}
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">{{ appointment.date|date:"M d, Y" }}</h6>
+                        <p class="card-text">
+                            <strong>Patient:</strong> {{ appointment.patient.get_full_name }}<br>
+                            <strong>Reason:</strong> {{ appointment.reason }}
+                        </p>
+                        
+                        {% if appointment.status == 'PENDING' %}
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-primary" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#confirmModal{{ appointment.id }}">
+                                Propose Time
+                            </button>
+                            <form action="{% url 'appointments:manage_appointment' appointment.id %}" method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="cancel">
+                                <button type="submit" class="btn btn-danger w-100">Cancel</button>
+                            </form>
+                        </div>
+                        {% elif appointment.status == 'CONFIRMED' %}
+                        <form action="{% url 'appointments:manage_appointment' appointment.id %}" method="post" class="d-grid">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="complete">
+                            <button type="submit" class="btn btn-info">Mark Complete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if appointment.status == 'PENDING' %}
+            <!-- Confirmation Modal -->
+            <div class="modal fade" id="confirmModal{{ appointment.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form action="{% url 'appointments:manage_appointment' appointment.id %}" method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="propose_time">
+                            <input type="hidden" name="appointment_time" id="selectedTime{{ appointment.id }}">
+                            
+                            <div class="modal-header">
+                                <h5 class="modal-title">Propose Appointment Time</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <h6>Patient: {{ appointment.patient.get_full_name }}</h6>
+                                    <p class="text-muted mb-3">Date: {{ appointment.date|date:"M d, Y" }}</p>
+                                    
+                                    <label class="form-label">Select Time Slot:</label>
+                                    <div class="time-slots-container d-flex flex-wrap" id="timeSlots{{ appointment.id }}">
+                                        <!-- Time slots will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary" id="confirmBtn{{ appointment.id }}" disabled>
+                                    Propose Time
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <h5 class="text-muted">No appointments scheduled</h5>
+                    <p>When patients book appointments with you, they will appear here.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Function to generate time slots
+    function generateTimeSlots(modalId, appointmentDate) {
+        const container = document.getElementById('timeSlots' + modalId);
+        const selectedTimeInput = document.getElementById('selectedTime' + modalId);
+        const confirmBtn = document.getElementById('confirmBtn' + modalId);
+        const startHour = 8; // 8 AM
+        const endHour = 17; // 5 PM
+        const interval = 30; // 30-minute intervals
+        
+        // Clear existing time slots
+        container.innerHTML = '';
+        
+        // Generate time slots
+        for (let hour = startHour; hour < endHour; hour++) {
+            for (let minute = 0; minute < 60; minute += interval) {
+                const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                const slot = document.createElement('div');
+                slot.className = 'time-slot';
+                slot.textContent = new Date(`2000-01-01T${timeString}`).toLocaleTimeString([], { 
+                    hour: 'numeric', 
+                    minute: '2-digit' 
+                });
+                
+                slot.addEventListener('click', function() {
+                    // Remove selection from other slots
+                    container.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                    // Add selection to clicked slot
+                    slot.classList.add('selected');
+                    // Update hidden input
+                    selectedTimeInput.value = timeString;
+                    // Enable confirm button
+                    confirmBtn.disabled = false;
+                });
+                
+                container.appendChild(slot);
+            }
+        }
+    }
+
+    // Initialize time slots when modals are shown
+    document.addEventListener('DOMContentLoaded', function() {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.addEventListener('show.bs.modal', function(event) {
+                const modalId = modal.id.replace('confirmModal', '');
+                generateTimeSlots(modalId);
+            });
+        });
+    });
+
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+</script>
+{% endblock %}

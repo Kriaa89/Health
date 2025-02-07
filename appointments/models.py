@@ -6,9 +6,11 @@ from django.conf import settings
 class Appointment(models.Model):
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
+        ('TIME_PROPOSED', 'Time Proposed'),
         ('CONFIRMED', 'Confirmed'),
         ('COMPLETED', 'Completed'),
         ('CANCELLED', 'Cancelled'),
+        ('DECLINED', 'Declined'),
     ]
 
     doctor = models.ForeignKey(
@@ -22,7 +24,7 @@ class Appointment(models.Model):
         related_name='patient_appointments'
     )
     date = models.DateField()
-    time = models.TimeField()
+    time = models.TimeField(null=True, blank=True)
     reason = models.TextField()
     status = models.CharField(
         max_length=20,

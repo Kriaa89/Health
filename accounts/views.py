@@ -20,7 +20,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             messages.success(request, 'Registration successful!')
-            return redirect('login')
+            return redirect('accounts:login')
         else:
             print("Form errors:", form.errors)
             for field, errors in form.errors.items():
@@ -59,7 +59,7 @@ def user_login(request):
 def user_logout(request):
     auth_logout(request)
     messages.success(request, 'Logout successful!')
-    return redirect('home')
+    return redirect('accounts:home')
 
 @login_required
 def doctor_dashboard(request):

@@ -55,7 +55,6 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Pending Appointments</h5>
-                    <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
                     {% if pending_appointments %}
@@ -74,16 +73,10 @@
                                         <tr>
                                             <td>{{ appointment.patient.get_full_name }}</td>
                                             <td>{{ appointment.date }}</td>
-                                            <td>{{ appointment.time }}</td>
+                                            <td>{{ appointment.time|default:"Not set" }}</td>
                                             <td>
-                                                <form method="post" action="{% url 'appointments:manage_appointment' appointment.id %}" class="d-inline">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn btn-sm btn-success">Accept</button>
-                                                </form>
-                                                <form method="post" action="{% url 'appointments:cancel_appointment' appointment.id %}" class="d-inline">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn btn-sm btn-danger">Decline</button>
-                                                </form>
+                                                <a href="{% url 'appointments:manage_appointment' appointment.id %}" class="btn btn-sm btn-primary">Manage</a>
+                                                <a href="{% url 'appointments:delete_appointment' appointment.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this appointment?')">Delete</a>
                                             </td>
                                         </tr>
                                     {% endfor %}
@@ -91,7 +84,7 @@
                             </table>
                         </div>
                     {% else %}
-                        <p class="text-muted text-center mb-0">No pending appointments</p>
+                        <p class="text-muted mb-0">No pending appointments.</p>
                     {% endif %}
                 </div>
             </div>
@@ -103,20 +96,33 @@
                 </div>
                 <div class="card-body">
                     {% if upcoming_appointments %}
-                        <div class="list-group list-group-flush">
-                            {% for appointment in upcoming_appointments %}
-                                <div class="list-group-item">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">{{ appointment.patient.get_full_name }}</h6>
-                                        <small class="text-muted">{{ appointment.date }} at {{ appointment.time }}</small>
-                                    </div>
-                                    <p class="mb-1">{{ appointment.reason }}</p>
-                                    <small class="text-muted">Phone: {{ appointment.patient.phone_number }}</small>
-                                </div>
-                            {% endfor %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Date</th>
+                                        <th>Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for appointment in upcoming_appointments %}
+                                        <tr>
+                                            <td>{{ appointment.patient.get_full_name }}</td>
+                                            <td>{{ appointment.date }}</td>
+                                            <td>{{ appointment.time|default:"Not set" }}</td>
+                                            <td>
+                                                <a href="{% url 'appointments:manage_appointment' appointment.id %}" class="btn btn-sm btn-primary">Manage</a>
+                                                <a href="{% url 'appointments:delete_appointment' appointment.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this appointment?')">Delete</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     {% else %}
-                        <p class="text-muted text-center mb-0">No upcoming appointments</p>
+                        <p class="text-muted mb-0">No upcoming appointments.</p>
                     {% endif %}
                 </div>
             </div>
@@ -128,19 +134,33 @@
                 </div>
                 <div class="card-body">
                     {% if recent_appointments %}
-                        <div class="list-group list-group-flush">
-                            {% for appointment in recent_appointments %}
-                                <div class="list-group-item">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">{{ appointment.patient.get_full_name }}</h6>
-                                        <small class="text-muted">{{ appointment.date }}</small>
-                                    </div>
-                                    <p class="mb-1">{{ appointment.notes|default:"No notes available" }}</p>
-                                </div>
-                            {% endfor %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for appointment in recent_appointments %}
+                                        <tr>
+                                            <td>{{ appointment.patient.get_full_name }}</td>
+                                            <td>{{ appointment.date }}</td>
+                                            <td>{{ appointment.status }}</td>
+                                            <td>
+                                                <a href="{% url 'appointments:manage_appointment' appointment.id %}" class="btn btn-sm btn-primary">View</a>
+                                                <a href="{% url 'appointments:delete_appointment' appointment.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this appointment?')">Delete</a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     {% else %}
-                        <p class="text-muted text-center mb-0">No recent appointments</p>
+                        <p class="text-muted mb-0">No recent appointments.</p>
                     {% endif %}
                 </div>
             </div>

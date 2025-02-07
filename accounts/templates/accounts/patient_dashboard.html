@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Patient Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .appointment-card {
+        transition: all 0.3s;
+    }
+    .appointment-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+    }
+    .time-proposal {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 1rem;
+        margin: 1rem 0;
+        border-radius: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="mb-4">My Appointments</h2>
+
+    {% if messages %}
+    <div class="messages mb-4">
+        {% for message in messages %}
+        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row">
+        {% if appointments %}
+            {% for appointment in appointments %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card appointment-card h-100">
+                    <div class="card-header {% if appointment.status == 'PENDING' %}bg-warning
+                        {% elif appointment.status == 'TIME_PROPOSED' %}bg-info
+                        {% elif appointment.status == 'CONFIRMED' %}bg-success
+                        {% elif appointment.status == 'COMPLETED' %}bg-secondary
+                        {% elif appointment.status == 'DECLINED' %}bg-danger
+                        {% else %}bg-danger{% endif %} text-white">
+                        <h5 class="card-title mb-0">{{ appointment.status }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            Date: {{ appointment.date|date:"M d, Y" }}
+                            {% if appointment.time %}
+                            <br>Time: {{ appointment.time|time:"g:i A" }}
+                            {% endif %}
+                        </h6>
+                        <p class="card-text">
+                            <strong>Doctor:</strong> Dr. {{ appointment.doctor.get_full_name }}<br>
+                            <strong>Reason:</strong> {{ appointment.reason }}
+                        </p>
+
+                        {% if appointment.status == 'TIME_PROPOSED' %}
+                        <div class="time-proposal">
+                            <p class="mb-3">
+                                <i class="fas fa-clock"></i> 
+                                Dr. {{ appointment.doctor.get_full_name }} has proposed an appointment time:
+                                <strong>{{ appointment.time|time:"g:i A" }}</strong>
+                            </p>
+                            <div class="d-grid gap-2">
+                                <form action="{% url 'appointments:manage_appointment' appointment.id %}" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="accept_time">
+                                    <button type="submit" class="btn btn-success w-100 mb-2">Accept Time</button>
+                                </form>
+                                <form action="{% url 'appointments:manage_appointment' appointment.id %}" method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="decline_time">
+                                    <button type="submit" class="btn btn-danger w-100">Decline Time</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if appointment.status == 'PENDING' or appointment.status == 'CONFIRMED' %}
+                        <div class="d-grid mt-3">
+                            <form action="{% url 'appointments:manage_appointment' appointment.id %}" method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="cancel">
+                                <button type="submit" class="btn btn-danger w-100">Cancel Appointment</button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <h5 class="text-muted">No appointments scheduled</h5>
+                    <p>Book an appointment to get started with your healthcare journey.</p>
+                    <a href="{% url 'appointments:book_appointment' %}" class="btn btn-primary">Book Appointment</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-hide alerts after 5 seconds
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+</script>
+{% endblock %}
