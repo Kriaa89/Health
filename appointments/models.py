@@ -4,6 +4,13 @@ from django.conf import settings
 # Create your models here.
 
 class Appointment(models.Model):
+    TYPE_CHOICES = [
+        ('PHYSICAL', 'In-Clinic Visit'),
+        ('VIRTUAL', 'Virtual Consultation'),
+        ('HOME', 'Home Visit'),
+        ('EMERGENCY', 'Emergency'),
+    ]
+    
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
         ('TIME_PROPOSED', 'Time Proposed'),
@@ -25,7 +32,16 @@ class Appointment(models.Model):
     )
     date = models.DateField()
     time = models.TimeField(null=True, blank=True)
+    
+    # Added fields from the old patients.Appointment model
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='PHYSICAL')
     reason = models.TextField()
+    symptoms = models.TextField(blank=True)
+    diagnosis = models.TextField(blank=True)
+    prescription = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    home_address = models.TextField(blank=True, null=True)
+    
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -46,4 +62,4 @@ class Appointment(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.doctor.get_full_name()} - {self.patient.get_full_name()} ({self.date} {self.time})"
+        return f"{self.doctor.get_full_name()} - {self.patient.get_full_name()} ({self.date} {self.time if self.time else 'No time set'})"

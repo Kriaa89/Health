@@ -67,30 +67,36 @@ def doctor_dashboard(request):
         messages.error(request, 'Access denied. You must be a doctor to view this page.')
         return redirect('home')
     
-    # Get all appointments for the doctor
-    appointments = Appointment.objects.filter(doctor=request.user)
     today = datetime.now().date()
     
-    # Get different appointment categories
-    pending_appointments = appointments.filter(status='PENDING').order_by('date', 'time')
-    upcoming_appointments = appointments.filter(
-        status='CONFIRMED',
-        date__gte=today
-    ).order_by('date', 'time')
-    completed_appointments = appointments.filter(status='COMPLETED')
-    cancelled_appointments = appointments.filter(status='CANCELLED')
-    todays_appointments = appointments.filter(
-        date=today
-    ).order_by('time')
+    # Use select_related to fetch related patient data in a single query
+    # This avoids N+1 query problem when accessing patient information in templates
+    base_query = Appointment.objects.filter(doctor=request.user).select_related('patient')
+    
+    # Limit recent appointments for improved performance
+    recent_appointments = base_query.filter(
+        status__in=['COMPLETED', 'CANCELLED']
+    ).order_by('-date', '-time')[:10]
     
     context = {
-        'appointments': appointments,
-        'pending_appointments': pending_appointments,
-        'upcoming_appointments': upcoming_appointments,
-        'completed_appointments': completed_appointments,
-        'cancelled_appointments': cancelled_appointments,
-        'todays_appointments': todays_appointments,
+        'doctor': request.user,
+        'pending_appointments': base_query.filter(status='PENDING').order_by('date', 'time'),
+        'time_proposed_appointments': base_query.filter(status='TIME_PROPOSED').order_by('date', 'time'),
+        'upcoming_appointments': base_query.filter(
+            status='CONFIRMED',
+            date__gte=today
+        ).order_by('date', 'time'),
+        'todays_appointments': base_query.filter(
+            date=today,
+            status='CONFIRMED'
+        ).order_by('time'),
+        'recent_appointments': recent_appointments,
     }
+    
+    # Add appointment counts to avoid extra queries in the template
+    context['pending_count'] = context['pending_appointments'].count()
+    context['upcoming_count'] = context['upcoming_appointments'].count()
+    context['todays_count'] = context['todays_appointments'].count()
     
     return render(request, 'accounts/doctor_dashboard.html', context)
 
@@ -107,21 +113,23 @@ def patient_dashboard(request):
         messages.error(request, 'Access denied. You must be a patient to view this page.')
         return redirect('home')
     
-    # Get all appointments for the patient
-    appointments = Appointment.objects.filter(patient=request.user).order_by('-date', '-time')
+    today = datetime.now().date()
     
-    # Get appointment counts by status
-    upcoming_appointments = appointments.filter(status='CONFIRMED', date__gte=datetime.now().date())
-    pending_appointments = appointments.filter(status='PENDING')
-    completed_appointments = appointments.filter(status='COMPLETED')
-    cancelled_appointments = appointments.filter(status='CANCELLED')
+    # Use select_related to fetch related doctor data in a single query
+    # This avoids N+1 query problem when accessing doctor information in templates
+    base_query = Appointment.objects.filter(patient=request.user).select_related('doctor')
     
+    # Get all appointments for the patient, but limit to 20 most recent for improved performance
+    all_appointments = base_query.order_by('-date', '-time')[:20]
+    
+    # Get appointment counts by status using prefetched base query
     context = {
-        'appointments': appointments,
-        'upcoming_appointments': upcoming_appointments,
-        'pending_appointments': pending_appointments,
-        'completed_appointments': completed_appointments,
-        'cancelled_appointments': cancelled_appointments,
+        'appointments': all_appointments,
+        'upcoming_appointments': base_query.filter(status='CONFIRMED', date__gte=today),
+        'pending_appointments': base_query.filter(status__in=['PENDING', 'TIME_PROPOSED']),
+        'completed_appointments': base_query.filter(status='COMPLETED'),
+        'cancelled_appointments': base_query.filter(status__in=['CANCELLED', 'DECLINED']),
+        'user': request.user
     }
     
     return render(request, 'accounts/patient_dashboard.html', context)
