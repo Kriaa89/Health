@@ -1,4 +1,4 @@
-²²  &   <w²RTDFERDZ²²²²²²²²²² {% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Doctor Schedule{% endblock %}
@@ -42,7 +42,7 @@
     <h2 class="mb-4">My Schedule</h2>
 
     {% if messages %}
-    <div class="messages">
+    <div class="messages mb-4">
         {% for message in messages %}
         <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
             {{ message }}
@@ -58,11 +58,12 @@
             <div class="col-md-6 col-lg-4 mb-4">
                 <div class="card appointment-card h-100">
                     <div class="card-header {% if appointment.status == 'PENDING' %}bg-warning
+                        {% elif appointment.status == 'TIME_PROPOSED' %}bg-info
                         {% elif appointment.status == 'CONFIRMED' %}bg-success
                         {% elif appointment.status == 'COMPLETED' %}bg-info
                         {% else %}bg-danger{% endif %} text-white">
                         <h5 class="card-title mb-0">
-                            {{ appointment.status }}
+                            {{ appointment.get_status_display }}
                             {% if appointment.status == 'CONFIRMED' %}
                             - {{ appointment.time|time:"g:i A" }}
                             {% endif %}
@@ -89,7 +90,6 @@
                             </form>
                         </div>
                         {% elif appointment.status == 'CONFIRMED' %}
-                        <form action="{% url 'appointments:manage_appointment' appointment.id %}" method="post" class="d-grid">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="complete">
                             <button type="submit" class="btn btn-info">Mark Complete</button>
