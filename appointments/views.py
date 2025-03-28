@@ -12,36 +12,22 @@ import random
 def book_appointment(request):
     if request.method == 'POST':
         date = request.POST.get('date')
-        time = request.POST.get('time')
         reason = request.POST.get('reason')
         doctor_id = request.POST.get('doctor')
         
         try:
             # Convert date string to proper format
             appointment_date = datetime.strptime(date, '%Y-%m-%d').date()
-            # Convert time string to proper format
-            appointment_time = datetime.strptime(time, '%H:%M').time()
             
             # Get the selected doctor
             doctor = get_object_or_404(CustomUser, id=doctor_id, role='DOCTOR')
             
-            # Check if the doctor already has an appointment at this time
-            existing_appointment = Appointment.objects.filter(
-                doctor=doctor,
-                date=appointment_date,
-                time=appointment_time
-            ).exists()
-            
-            if existing_appointment:
-                messages.error(request, 'This time slot is already booked. Please choose another time.')
-                return redirect('appointments:book_appointment')
-            
-            # Create the appointment with time
+            # Create the appointment (time will be proposed by doctor)
             appointment = Appointment.objects.create(
                 doctor=doctor,
                 patient=request.user,
                 date=appointment_date,
-                time=appointment_time,
+                time=None,
                 reason=reason,
                 status='PENDING'
             )

@@ -7,71 +7,71 @@
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow-sm">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">Book an Appointment</h3>
+                </div>
                 <div class="card-body">
-                    <h2 class="card-title text-center mb-4">Book an Appointment</h2>
-                    
                     {% if messages %}
                     <div class="messages mb-4">
                         {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }}">
+                        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
                             {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                         {% endfor %}
                     </div>
                     {% endif %}
-                    
-                    <form method="post">
+
+                    <form method="post" class="needs-validation" novalidate>
                         {% csrf_token %}
-                        <div class="mb-3">
+                        
+                        <div class="mb-4">
                             <label for="doctor" class="form-label">Select Doctor</label>
                             <select name="doctor" id="doctor" class="form-select" required>
                                 <option value="">Choose a doctor...</option>
                                 {% for doctor in doctors %}
-                                <option value="{{ doctor.id }}">Dr. {{ doctor.get_full_name }}</option>
+                                <option value="{{ doctor.id }}">Dr. {{ doctor.get_full_name }} {% if doctor.specialization %}({{ doctor.specialization }}){% endif %}</option>
                                 {% endfor %}
                             </select>
+                            <div class="invalid-feedback">
+                                Please select a doctor.
+                            </div>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="date" class="form-label">Appointment Date</label>
+
+                        <div class="mb-4">
+                            <label for="date" class="form-label">Preferred Date</label>
                             <input type="date" class="form-control" id="date" name="date" 
-                                min="{{ min_date }}" max="{{ max_date }}" required>
-                            <small class="text-muted">Select a date within the next 30 days</small>
+                                   min="{{ min_date }}" max="{{ max_date }}" required>
+                            <div class="invalid-feedback">
+                                Please select a valid date.
+                            </div>
+                            <small class="text-muted">
+                                You can book appointments up to 30 days in advance.
+                            </small>
                         </div>
-                        
-                        <div class="mb-3">
-                            <label for="time" class="form-label">Appointment Time</label>
-                            <select name="time" id="time" class="form-select" required>
-                                <option value="">Select a time slot...</option>
-                                <option value="08:00">8:00 AM</option>
-                                <option value="08:30">8:30 AM</option>
-                                <option value="09:00">9:00 AM</option>
-                                <option value="09:30">9:30 AM</option>
-                                <option value="10:00">10:00 AM</option>
-                                <option value="10:30">10:30 AM</option>
-                                <option value="11:00">11:00 AM</option>
-                                <option value="11:30">11:30 AM</option>
-                                <option value="12:00">12:00 PM</option>
-                                <option value="12:30">12:30 PM</option>
-                                <option value="14:00">2:00 PM</option>
-                                <option value="14:30">2:30 PM</option>
-                                <option value="15:00">3:00 PM</option>
-                                <option value="15:30">3:30 PM</option>
-                                <option value="16:00">4:00 PM</option>
-                                <option value="16:30">4:30 PM</option>
-                            </select>
-                            <small class="text-muted">Choose from available time slots (30-minute intervals)</small>
-                        </div>
-                        
+
                         <div class="mb-4">
                             <label for="reason" class="form-label">Reason for Visit</label>
-                            <textarea class="form-control" id="reason" name="reason" rows="3" required 
-                                placeholder="Please describe your symptoms or reason for the visit"></textarea>
+                            <textarea class="form-control" id="reason" name="reason" rows="3" 
+                                      placeholder="Please describe your symptoms or reason for the visit" required></textarea>
+                            <div class="invalid-feedback">
+                                Please provide a reason for your visit.
+                            </div>
                         </div>
-                        
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            After submitting your appointment request:
+                            <ul class="mb-0 mt-2">
+                                <li>The doctor will propose a suitable time for your appointment</li>
+                                <li>You'll receive a notification to accept or decline the proposed time</li>
+                                <li>Once accepted, your appointment will be confirmed</li>
+                            </ul>
+                        </div>
+
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Book Appointment</button>
+                            <button type="submit" class="btn btn-primary">Request Appointment</button>
                         </div>
                     </form>
                 </div>
@@ -79,20 +79,35 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split('T')[0];
-    const dateInput = document.getElementById('date');
-    
-    // Set minimum date to today
-    dateInput.min = today;
-    
-    // Set maximum date to 30 days from today
-    const maxDate = new Date();
-    maxDate.setDate(maxDate.getDate() + 30);
-    dateInput.max = maxDate.toISOString().split('T')[0];
-});
+    // Form validation
+    (function () {
+        'use strict'
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms)
+            .forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+    })()
+
+    // Auto-hide alerts after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    });
 </script>
 {% endblock %}

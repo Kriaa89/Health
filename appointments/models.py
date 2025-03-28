@@ -36,8 +36,14 @@ class Appointment(models.Model):
 
     class Meta:
         ordering = ['-date', '-time']
-        # Ensure no double bookings for doctors
-        unique_together = ['doctor', 'date', 'time']
+        # More precise constraint to handle null times (pending appointments)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['doctor', 'date', 'time'],
+                condition=models.Q(time__isnull=False),
+                name='unique_appointment_when_time_set'
+            )
+        ]
 
     def __str__(self):
         return f"{self.doctor.get_full_name()} - {self.patient.get_full_name()} ({self.date} {self.time})"
