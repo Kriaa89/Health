@@ -25,6 +25,19 @@
 
                     <form method="post" class="needs-validation" novalidate>
                         {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <label for="doctor" class="form-label">Select Doctor</label>
+                            <select name="doctor" id="doctor" class="form-select" required>
+                                <option value="">Choose a doctor...</option>
+                                {% for doctor in doctors %}
+                                <option value="{{ doctor.id }}">Dr. {{ doctor.get_full_name }} {% if doctor.specialization %}({{ doctor.specialization }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a doctor.
+                            </div>
+                        </div>
 
                         <div class="mb-4">
                             <label for="date" class="form-label">Preferred Date</label>
@@ -47,13 +60,28 @@
                             </div>
                         </div>
 
+                        <div class="mb-4">
+                            <label for="type" class="form-label">Appointment Type</label>
+                            <select name="type" id="type" class="form-select">
+                                {% for key, value in appointment_types.items %}
+                                <option value="{{ key }}">{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="symptoms" class="form-label">Symptoms (Optional)</label>
+                            <textarea class="form-control" id="symptoms" name="symptoms" rows="2" 
+                                      placeholder="Describe any symptoms you're experiencing"></textarea>
+                        </div>
+
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle"></i> 
                             After submitting your appointment request:
                             <ul class="mb-0 mt-2">
-                                <li>A doctor will be assigned to your case</li>
                                 <li>The doctor will propose a suitable time for your appointment</li>
                                 <li>You'll receive a notification to accept or decline the proposed time</li>
+                                <li>Once accepted, your appointment will be confirmed</li>
                             </ul>
                         </div>
 
@@ -91,8 +119,10 @@
         setTimeout(function() {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert) {
-                const bsAlert = new bootstrap.Alert(alert);
-                bsAlert.close();
+                if (alert && typeof bootstrap !== 'undefined') {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
             });
         }, 5000);
     });
