@@ -1,5 +1,6 @@
 from django.db import models
 from accounts.models import CustomUser
+from appointments.models import Appointment
 
 class Patient(models.Model):
     BLOOD_TYPE_CHOICES = [
@@ -23,72 +24,59 @@ class Patient(models.Model):
     emergency_contact_relationship = models.CharField(max_length=50)
     insurance_provider = models.CharField(max_length=100, blank=True)
     insurance_id = models.CharField(max_length=50, blank=True)
-
-    def __str__(self):
-        return f"Patient {self.user.get_full_name()}"
-
-class MalePatient(models.Model):
-    patient = models.OneToOneField(Patient, on_delete=models.CASCADE)
-    prostate_exam = models.BooleanField(default=False)
-    cardiac_test = models.BooleanField(default=False)
-    psa_level = models.FloatField(null=True, blank=True)
+    
+    # Medical history fields - consolidated from gender-specific models
+    is_male = models.BooleanField(default=True)
+    
+    # Common fields for all patients
     last_checkup = models.DateField(null=True, blank=True)
-
-    def __str__(self):
-        return f"Male Patient {self.patient.user.get_full_name()}"
-
-class FemalePatient(models.Model):
-    patient = models.OneToOneField(Patient, on_delete=models.CASCADE)
-    pregnant = models.BooleanField(default=False)
+    
+    # Male-specific fields
+    prostate_exam = models.BooleanField(default=False, null=True, blank=True)
+    cardiac_test = models.BooleanField(default=False, null=True, blank=True)
+    psa_level = models.FloatField(null=True, blank=True)
+    
+    # Female-specific fields
+    pregnant = models.BooleanField(default=False, null=True, blank=True)
     last_menstrual = models.DateField(null=True, blank=True)
     mammogram_date = models.DateField(null=True, blank=True)
     pap_smear_date = models.DateField(null=True, blank=True)
     gynecological_history = models.TextField(blank=True)
 
     def __str__(self):
-        return f"Female Patient {self.patient.user.get_full_name()}"
-
-class Appointment(models.Model):
-    TYPE_CHOICES = [
-        ('PHYSICAL', 'In-Clinic Visit'),
-        ('VIRTUAL', 'Virtual Consultation'),
-        ('HOME', 'Home Visit'),
-        ('EMERGENCY', 'Emergency'),
-    ]
-    
-    STATUS_CHOICES = [
-        ('PENDING', 'Pending'),
-        ('CONFIRMED', 'Confirmed'),
-        ('COMPLETED', 'Completed'),
-        ('CANCELED', 'Canceled'),
-    ]
-
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    doctor = models.ForeignKey('doctors.Doctor', on_delete=models.CASCADE)
-    date = models.DateField()
-    time = models.TimeField()
-    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
-    symptoms = models.TextField(blank=True)
-    diagnosis = models.TextField(blank=True)
-    prescription = models.TextField(blank=True)
-    notes = models.TextField(blank=True)
-    home_address = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.patient.user.get_full_name()} - {self.doctor.user.get_full_name()} ({self.date})"
-
-    class Meta:
-        ordering = ['-date', '-time']
+        return f"Patient {self.user.get_full_name()}"
+        
+    @property
+    def medical_info(self):
+        """Return relevant medical information based on gender."""
+        info = {
+            'blood_type': self.blood_type,
+            'allergies': self.allergies if self.allergies else None,
+            'chronic_conditions': self.chronic_conditions if self.chronic_conditions else None,
+            'last_checkup': self.last_checkup
+        }
+        
+        if self.is_male:
+            info.update({
+                'prostate_exam': self.prostate_exam,
+                'cardiac_test': self.cardiac_test,
+                'psa_level': self.psa_level
+            })
+        else:
+            info.update({
+                'pregnant': self.pregnant,
+                'last_menstrual': self.last_menstrual,
+                'mammogram_date': self.mammogram_date,
+                'pap_smear_date': self.pap_smear_date
+            })
+            
+        return info
 
 class Review(models.Model):
     RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
 
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
-    doctor = models.ForeignKey('doctors.Doctor', on_delete=models.CASCADE, null=True, blank=True)
-    nurse = models.ForeignKey('nurses.Nurse', on_delete=models.CASCADE, null=True, blank=True)
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='reviews')
+    doctor = models.ForeignKey('doctors.Doctor', on_delete=models.CASCADE, related_name='reviews')
     appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE)
     rating = models.IntegerField(choices=RATING_CHOICES)
     comment = models.TextField()
